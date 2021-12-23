@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<catalogRequest>
+    <catalogs>
+        <catalog>
+            <catalogType>CLICKBOX</catalogType>
+            <fileType>ParticipantDirectory</fileType>
+            <history>true</history>
+            <!--<localVersion>20210101120000</localVersion>-->
+        </catalog>
+    </catalogs>
+</catalogRequest>

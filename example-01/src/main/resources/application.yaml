@@ -1,0 +1,11 @@
+
+camel:
+  springboot:
+    main-run-controller: true
+
+main:
+  delay: 10000
+  repeatCount: 3
+
+catalog:
+  url: https://grinder.cgm-medistar.cz:8443/grinder/rest/FileStorage/askCatalogue
