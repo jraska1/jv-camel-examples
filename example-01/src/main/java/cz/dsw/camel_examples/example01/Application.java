@@ -1,6 +1,6 @@
-package cz.dsw.camel_examples;
+package cz.dsw.camel_examples.example01;
 
-import cz.dsw.camel_examples.entity.HealthCareProvider;
+import cz.dsw.camel_examples.example01.entity.HealthCareProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;

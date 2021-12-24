@@ -3,7 +3,7 @@ camel:
   springboot:
     main-run-controller: true
 
-main:
+scheduler:
   delay: 10000
   repeatCount: 3
 

@@ -1,4 +1,4 @@
-package cz.dsw.camel_examples.entity;
+package cz.dsw.camel_examples.example01.entity;
 
 public class Contact {
 

@@ -1,0 +1,1024 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 7.2.4.1 (Linux)"/>
+	<meta name="created" content="2021-12-23T12:12:52.517403777"/>
+	<meta name="changed" content="2021-12-24T12:57:26.288508215"/>
+	<style type="text/css">
+		@page { margin: 0.79in }
+		p { line-height: 115%; margin-bottom: 0.1in; background: transparent }
+		h2.cjk { font-family: "Noto Sans CJK SC" }
+		h2.ctl { font-family: "Lohit Devanagari" }
+		pre.cjk { font-family: "Noto Sans Mono CJK SC", monospace }
+		a.cjk:link { so-language: zxx }
+		a.ctl:link { so-language: zxx }
+	</style>
+</head>
+<body lang="cs-CZ" dir="ltr"><p style="line-height: 100%; margin-bottom: 0in">
+Používám <a class="western" href="https://camel.apache.org/">Apache
+Camel</a> v různých projektech již více jak deset let a jsem jeho
+velkým příznivcem. Samotní tvůrci jej označují jako
+univerzální integrační platformu, ale z vlastní zkušenosti můžu
+říct, že pole jeho využití je širší.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Jeho funkcionalita
+zahrnující stovky komponent a datových formátů je ve velice
+široká. Vždy záleží na vašich potřebách, co z toho reálně
+použijete. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Popisovat jednotlivé
+vlastnosti a důvody, proč se mi líbí, by bylo hodně zdlouhavé a
+asi i nudné. Kromě toho byly o Apache Camel napsány obsáhlé
+knihy, na což ambici nemám.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Tak jsem si řekl,
+že bych mohl ukázat zajímavé případy, kdy jsem Apache Camel
+reálně použil. Snad v někom z vás vzbudím zájem se na něj
+také podívat. Tohle je jeden z takových případů.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><span lang="cs-CZ">Všechny
+zdroje k příkladu najdete na GitHub projektu:
+<a class="western" href="https://github.com/jraska1/jv-camel-examples/tree/main/example-01">jraska1/jv-camel-examples/example-01</a>.</span></p>
+<h2 class="western">Kapitola nultá – prolog</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Dostal jsem za úkol
+propojit dva systémy pro výměnu zdravotnické dokumentace tak, aby
+si zdravotnická zařízení v nich zapojená mohla vyměňovat DASTA
+zprávy. Abych mohl odeslat zprávu z  jednoho systému do druhého,
+musím vědět, jaká zdravotnická zařízení jsou v tom druhém
+systému zapojena. A to bude cílem této ukázky.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Systém, na který
+se napojuji, poskytuje informace o jim podporovaných zdravotnických
+zařízeních ve formě XML dokumentu dostupného prostřednictvím
+webové služby. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Potřebuji tento
+dokument načíst, vybrat z něj pro mne podstatné údaje, a zapsat
+si je do vlastní správy ve formě Java Bean.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Takto vypadá
+zkrácená verze XML dokumentu se zdrojovými daty:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;?xml</b></font> <font color="#26a269">version</font><font color="#c01c28">=&quot;1.0&quot;</font> <font color="#26a269">encoding</font><font color="#c01c28">=&quot;UTF-8&quot;</font> <font color="#26a269">standalone</font><font color="#c01c28">=&quot;no&quot;</font><font color="#12488b"><b>?&gt;</b></font></font>
+<font color="#12488b"><font size="1" style="font-size: 8pt"><b>&lt;Participants&gt;</b></font></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Participant&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Clickbox&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;organisationname&gt;</b></font>Poliklinika Ústí nad Orlicí - TEST<font color="#12488b"><b>&lt;/organisationname&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;zarizeni&gt;</b></font>Poliklinika Ústí nad Orlicí - TEST<font color="#12488b"><b>&lt;/zarizeni&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;ico&gt;</b></font>60112301<font color="#12488b"><b>&lt;/ico&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;pracoviste&gt;</b></font>Poliklinika Ústí nad Orlicí - pracoviště<font color="#12488b"><b>&lt;/pracoviste&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;street&gt;</b></font>Čs. armády<font color="#12488b"><b>&lt;/street&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;housenumber&gt;</b></font>1181<font color="#12488b"><b>&lt;/housenumber&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;postalcode&gt;</b></font>56201<font color="#12488b"><b>&lt;/postalcode&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;city&gt;</b></font>Ústí nad Orlicí<font color="#12488b"><b>&lt;/city&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;mnet&gt;</b></font>CZ9TEST5<font color="#12488b"><b>&lt;/mnet&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;phoneoffice&gt;</b></font>777166528<font color="#12488b"><b>&lt;/phoneoffice&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;phonemobile&gt;</b></font>777166528<font color="#12488b"><b>&lt;/phonemobile&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;email&gt;</b></font>petr.hartman.cb@seznam.cz<font color="#12488b"><b>&lt;/email&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;icz&gt;</b></font>65123000<font color="#12488b"><b>&lt;/icz&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;icp&gt;</b></font>65123001<font color="#12488b"><b>&lt;/icp&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;icp&gt;</b></font>65123002<font color="#12488b"><b>&lt;/icp&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;odb&gt;</b></font>001<font color="#12488b"><b>&lt;/odb&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;odb&gt;</b></font>207<font color="#12488b"><b>&lt;/odb&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;odb&gt;</b></font>603<font color="#12488b"><b>&lt;/odb&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;countrycode&gt;</b></font>CZ<font color="#12488b"><b>&lt;/countrycode&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;cgmnumber&gt;</b></font>01300103792<font color="#12488b"><b>&lt;/cgmnumber&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;doctor&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;firstname&gt;</b></font>Karel<font color="#12488b"><b>&lt;/firstname&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;lastname&gt;</b></font>Svoboda<font color="#12488b"><b>&lt;/lastname&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;idclk&gt;</b></font>1111111111<font color="#12488b"><b>&lt;/idclk&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;phone&gt;</b></font>111111111<font color="#12488b"><b>&lt;/phone&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/Clickbox&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;MedicalNet&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Alias&gt;</b></font>CZ9TEST5<font color="#12488b"><b>&lt;/Alias&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;MailAddress&gt;</b></font>cz9test5@cz.top.medicalnetworks.com<font color="#12488b"><b>&lt;/MailAddress&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;DisplayName&gt;</b></font>CGM CZ - test - LSM Petr Hartman<font color="#12488b"><b>&lt;/DisplayName&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedMessageCompressions&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedMessageCompression&gt;</b></font>None<font color="#12488b"><b>&lt;/SupportedMessageCompression&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedMessageCompression&gt;</b></font>GZip<font color="#12488b"><b>&lt;/SupportedMessageCompression&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/SupportedMessageCompressions&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedMessageExtensions&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedMessageExtension&gt;</b></font>DispositionNotification<font color="#12488b"><b>&lt;/SupportedMessageExtension&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/SupportedMessageExtensions&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedSignatureHashAlgorithms&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Oid&gt;</b></font>1.3.14.3.2.26<font color="#12488b"><b>&lt;/Oid&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/SupportedSignatureHashAlgorithms&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportsDetachedSignatures&gt;</b></font>0<font color="#12488b"><b>&lt;/SupportsDetachedSignatures&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;SupportedEncryptionAlgorithms&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Oid&gt;</b></font>1.2.840.113549.3.7<font color="#12488b"><b>&lt;/Oid&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/SupportedEncryptionAlgorithms&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;LastName&gt;</b></font>CGM CZ - test - LSM<font color="#12488b"><b>&lt;/LastName&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;FirstName&gt;</b></font>Petr Hartman<font color="#12488b"><b>&lt;/FirstName&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Prefix/&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Head&gt;</b></font>To<font color="#12488b"><b>&lt;/Head&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Street&gt;</b></font>Čs. Armády 1181<font color="#12488b"><b>&lt;/Street&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;ZipCode&gt;</b></font>562 15<font color="#12488b"><b>&lt;/ZipCode&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;City&gt;</b></font>Ústí nad Orlicí<font color="#12488b"><b>&lt;/City&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;TelephoneNumber&gt;</b></font>+420777166528<font color="#12488b"><b>&lt;/TelephoneNumber&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;FaxNumber/&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Speciality&gt;</b></font>001<font color="#12488b"><b>&lt;/Speciality&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/MedicalNet&gt;</b></font></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/Participant&gt;</b></font></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Participant&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;Clickbox&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;organisationname&gt;</b></font>UROLOGIE ČERNOŠICE S.R.O., TÁBORSKÁ<font color="#12488b"><b>&lt;/organisationname&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;zarizeni&gt;</b></font>UROLOGIE ČERNOŠICE S.R.O.<font color="#12488b"><b>&lt;/zarizeni&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;ico&gt;</b></font>03298345<font color="#12488b"><b>&lt;/ico&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;pracoviste&gt;</b></font>TÁBORSKÁ<font color="#12488b"><b>&lt;/pracoviste&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;street&gt;</b></font>Táborská<font color="#12488b"><b>&lt;/street&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;housenumber&gt;</b></font>2025<font color="#12488b"><b>&lt;/housenumber&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;postalcode&gt;</b></font>252 28<font color="#12488b"><b>&lt;/postalcode&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;city&gt;</b></font>ČERNOŠICE  <font color="#12488b"><b>&lt;/city&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;mnet&gt;</b></font>null<font color="#12488b"><b>&lt;/mnet&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;phoneoffice&gt;</b></font>724773054<font color="#12488b"><b>&lt;/phoneoffice&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;phonemobile&gt;</b></font>724773054<font color="#12488b"><b>&lt;/phonemobile&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;email&gt;</b></font>mhujo@centrum.cz<font color="#12488b"><b>&lt;/email&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;icz&gt;</b></font>29725000<font color="#12488b"><b>&lt;/icz&gt;</b></font></font>
+<font size="1" style="font-size: 8pt"><font color="#12488b"><b>...</b></font></font>
+
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/Participant&gt;</b></font></font>
+<font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/Participant</b></font><font color="#12488b"><b>s</b></font><font color="#12488b"><b>&gt;</b></font></font>
+</pre><p style="line-height: 100%; margin-bottom: 0in">
+A ta data potřebuji dostat do vlastního správce konfigurací
+zdravotnických zařízení, který vypadá zhruba takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="2" style="font-size: 9pt"><font color="#000000">Map</font>&lt;<font color="#000000">URI</font>, <font color="#000000">HealthCareProvider</font>&gt; <font color="#871094">configStorage</font></font></font></font>
+</pre><p style="line-height: 100%; margin-bottom: 0in">
+kde klíčem je unikátní identifikátor ve formě URI, a hodnota
+pak instance třídy <i><b>HealtCareProvider</b></i>:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><font color="#0033b3">public class </font><font color="#000000">HealthCareProvider </font>{</font></font></font>
+
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">URI </font></font><font color="#871094"><font face="JetBrains Mono, monospace">oid</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">name</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">dn</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">ico</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">addr</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">icz</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">phone</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#871094"><font face="JetBrains Mono, monospace">email</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">&gt; </font><font color="#871094"><font face="JetBrains Mono, monospace">icp</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">Contact</font></font><font face="JetBrains Mono, monospace">&gt; </font><font color="#871094"><font face="JetBrains Mono, monospace">contacts</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">URI </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getOid</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">oid</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setOid</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">URI </font></font><font face="JetBrains Mono, monospace">oid) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">oid </font></font><font face="JetBrains Mono, monospace">= oid; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getName</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">name</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setName</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">name) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">name </font></font><font face="JetBrains Mono, monospace">= name; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getDn</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">dn</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setDn</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">dn) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">dn </font></font><font face="JetBrains Mono, monospace">= dn; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getIco</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">ico</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setIco</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">ico) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">ico </font></font><font face="JetBrains Mono, monospace">= ico; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getAddr</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">addr</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setAddr</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">addr) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">addr </font></font><font face="JetBrains Mono, monospace">= addr; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getIcz</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">icz</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setIcz</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">icz) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">icz </font></font><font face="JetBrains Mono, monospace">= icz; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getPhone</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">phone</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setPhone</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">phone) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">phone </font></font><font face="JetBrains Mono, monospace">= phone; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getEmail</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">email</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setEmail</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">String </font></font><font face="JetBrains Mono, monospace">email) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">email </font></font><font face="JetBrains Mono, monospace">= email; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">&gt; </font><font color="#00627a"><font face="JetBrains Mono, monospace">getIcp</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">icp</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setIcp</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">&gt; icp) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">icp </font></font><font face="JetBrains Mono, monospace">= icp; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">Contact</font></font><font face="JetBrains Mono, monospace">&gt; </font><font color="#00627a"><font face="JetBrains Mono, monospace">getContacts</font></font><font face="JetBrains Mono, monospace">() { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font color="#871094"><font face="JetBrains Mono, monospace">contacts</font></font><font face="JetBrains Mono, monospace">; }</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">setContacts</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">Contact</font></font><font face="JetBrains Mono, monospace">&gt; contacts) { </font><font color="#0033b3"><font face="JetBrains Mono, monospace">this</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace">contacts </font></font><font face="JetBrains Mono, monospace">= contacts; }</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">}</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+A to je vše, co potřebujete vědět pro pochopení tohoto článku.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Vlastní řešení
+bude zahrnovat především Camel cestu definovanou ve třídě
+<i><b>route/CamelRoutes</b></i>.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Takto vypadá její
+skelet:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#9e880d"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">@Component</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><font color="#0033b3">public class </font><font color="#000000">CamelRoutes </font><font color="#0033b3">extends </font><font color="#000000">RouteBuilder </font>{</font></font></font>
+
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private static final </font></font><font color="#000000"><font face="JetBrains Mono, monospace">Logger </font></font><font color="#871094"><font face="JetBrains Mono, monospace"><i>logger </i></font></font><font face="JetBrains Mono, monospace">= </font><font color="#000000"><font face="JetBrains Mono, monospace">LoggerFactory</font></font><font face="JetBrains Mono, monospace">.</font><font face="JetBrains Mono, monospace"><i>getLogger</i></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">CamelRoutes</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#9e880d"><font face="JetBrains Mono, monospace">@Autowired</font></font></font></font>
+<font color="#080808"><font color="#9e880d">    </font><font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">private </font></font><font color="#000000"><font face="JetBrains Mono, monospace">Map</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">URI</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider</font></font><font face="JetBrains Mono, monospace">&gt; </font><font color="#871094"><font face="JetBrains Mono, monospace">configStorage</font></font><font face="JetBrains Mono, monospace">;</font></font></font>
+
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font color="#9e880d"><font face="JetBrains Mono, monospace">@Override</font></font></font></font>
+<font color="#080808"><font color="#9e880d">    </font><font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public void </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">configure</font></font><font face="JetBrains Mono, monospace">() {</font></font></font>
+
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">}</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">}</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Cesty jsou dále definovány v metodě <b>configure()</b>.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Veškeré
+konfigurační parametry najdete v souboru <b>application.yaml</b>.</p>
+<h2 class="western">Kapitola první – krbové hodiny</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Informace zahrnuté
+ve formě XML seznamu obsahují vždy aktuální přehled připojených
+zdravotnických zařízení. Nemám jak zjistit, kdy se tento seznam
+změní a co bude v jeho obsahu změněno. Takže mně nezbývá nic
+jiného, než opakovaně načítat aktuální stav a promítat jej do
+interní správy. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Budu potřebovat
+nějaký časovač, který mi bude opakovaně spouštět akci načtení
+seznamu a jeho promítnutí do <i><b>configStorage</b></i>.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="background: #ffffff"><font color="#080808"><font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">from(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;scheduler://main?</font></font><font color="#067d17"><font face="JetBrains Mono, monospace">d</font></font><font color="#067d17"><font face="JetBrains Mono, monospace">elay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font></font><font face="JetBrains Mono, monospace">).routeId(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;main-route&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.log(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Tic tac ...&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+</pre><p style="line-height: 100%; margin-bottom: 0in">
+<br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">A takto vypadá
+výstup po spuštění:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+09:57:49.421  INFO 3486 --- [           main]
+c.d.c.example01.Application              : *** Hello World, greetings
+from Dwarf ***</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+09:57:50.452  INFO 3486 --- [cheduler://main] main-route             
+                 : Tic tac ...</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+09:58:00.459  INFO 3486 --- [cheduler://main] main-route             
+                 : Tic tac ...</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+09:58:10.461  INFO 3486 --- [cheduler://main] main-route             
+                 : Tic tac ...</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Parametry jsou:</p>
+<ul>
+	<li><p style="line-height: 100%; margin-bottom: 0in">scheduler.delay
+	– pro zpoždění mezi jednotlivými běhy (v milisekundách)</p>
+	<li><p style="line-height: 100%; margin-bottom: 0in">scheduler.repeatCount
+	– pro počet opakování (0 je opakování donekonečna)</p>
+</ul>
+<h2 class="western">Kapitola druhá – katalog</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Ono to s tou webovou
+službou není až tak jednoduché. Vlastní XML soubor nemůžu
+načíst přímo. Musím si jej nejdříve vyhledat v katalogu
+souborů, kde najdu i URL pro jeho stažení.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Dotaz na katalog je
+opět ve formě webové služby. V dotazu musí být specifikováno,
+o jaký soubor mám zájem, a to ve formě XML. Výsledkem jsou pak
+informace o dotazovaném souboru ve formě jak jinak než XML.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Dotaz na katalog mám
+schovaný v <i><b>templates/catalog_request.xml</b></i> a vypadá
+takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;?xml</b></font> <font color="#26a269">version</font><font color="#c01c28">=&quot;1.0&quot;</font> <font color="#26a269">encoding</font><font color="#c01c28">=&quot;utf-8&quot;</font><font color="#12488b"><b>?&gt;</b></font></font>
+<font color="#12488b"><font size="1" style="font-size: 8pt"><b>&lt;catalogRequest&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalogs&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalog&gt;</b></font></font>
+            <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalogType&gt;</b></font>CLICKBOX<font color="#12488b"><b>&lt;/catalogType&gt;</b></font></font>
+            <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;fileType&gt;</b></font>ParticipantDirectory<font color="#12488b"><b>&lt;/fileType&gt;</b></font></font>
+            <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;history&gt;</b></font>true<font color="#12488b"><b>&lt;/history&gt;</b></font></font>
+            <font size="1" style="font-size: 8pt"><font color="#c01c28">&lt;!--&lt;localVersion&gt;20210101120000&lt;/localVersion&gt;--&gt;</font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/catalog&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/catalogs&gt;</b></font></font>
+<font color="#12488b"><font size="1" style="font-size: 8pt"><b>&lt;/catalogRequest&gt;</b></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Po úpravě a doplnění cesta vypadá takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><font color="#9e880d">@Value</font>(<font color="#067d17">&quot;classpath:templates/catalog_request.xml&quot;</font>)</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><font color="#0033b3">private </font><font color="#000000">Resource </font><font color="#871094">template</font>;</font></font></font>
+<font size="1" style="font-size: 8pt"><font color="#080808"><font face="JetBrains Mono, monospace">from(</font></font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font></font><font color="#080808"><font face="JetBrains Mono, monospace">).routeId(</font></font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;main-route&quot;</font></font><font color="#080808"><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.convertBodyTo(</font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&amp;showHeaders=true&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Obsah dotazu načtu do těla zprávy z <i><b>template</b></i>. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Dále si nastavím
+typ HTTP metody a hlavičky pro webový dotaz na katalog. Jak obsah
+dotazu tak očekávaná odpověď musí mít typ <i>application/xml</i>.</p>
+<p style="line-height: 100%; margin-bottom: 0in">URL pro dotaz jsem
+si opět dotáhl z konfigurace pod názvem <i><span style="font-weight: normal">catalog.url</span></i>.
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Vyvolání dotazu a
+předání výsledku zajistí direktiva <i><b>to()</b></i>.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Po spuštění:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+10:58:31.595  INFO 4106 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Headers:
+{Accept=application/xml, Accept-Charset=UTF-8,
+Cache-Control=no-cache, no-store, max-age=0, must-revalidate,
+CamelHttpMethod=POST, CamelHttpResponseCode=200,
+CamelHttpResponseText=, CamelMessageTimestamp=1640339911004,
+Connection=keep-alive, Content-Type=application/xml;charset=UTF-8,
+Date=Fri, 24 Dec 2021 09:58:31 GMT, Expires=0, Pragma=no-cache,
+Server=nginx, Strict-Transport-Security=max-age=63072000;
+includeSubDomains; preload, Transfer-Encoding=chunked,
+X-Content-Type-Options=[nosniff, nosniff], X-Frame-Options=[DENY,
+DENY], X-XSS-Protection=[1; mode=block, 1; mode=block]}</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+String</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+&lt;catalogInfo&gt;&lt;catalogs&gt;&lt;catalog&gt;&lt;catalogType&gt;CLICKBOX&lt;/catalogType&gt;&lt;items&gt;&lt;item&gt;&lt;catalogType&gt;CLICKBOX&lt;/catalogType&gt;&lt;fileType&gt;ParticipantDirectory&lt;/fileType&gt;&lt;localVersion&gt;20211217102744&lt;/localVersion&gt;&lt;url&gt;https://grinder.cgm-medistar.cz:8443/grinder/rest/storageFiles/CLICKBOX.ParticipantDirectory.ParticipantDirectory_20211217102744.zip&lt;/url&gt;&lt;/item&gt;&lt;/items&gt;&lt;/catalog&gt;&lt;/catalogs&gt;&lt;/catalogInfo&gt;</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Výsledek jsem si
+ještě převedl do řetězce pro zobrazení ve výpisu. Vypadá
+takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;?xml</b></font> <font color="#26a269">version</font><font color="#c01c28">=&quot;1.0&quot;</font><font color="#12488b"><b>?&gt;</b></font></font>
+<font color="#12488b"><font size="1" style="font-size: 8pt"><b>&lt;catalogInfo&gt;</b></font></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalogs&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalog&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalogType&gt;</b></font>CLICKBOX<font color="#12488b"><b>&lt;/catalogType&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;items&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;item&gt;</b></font></font>
+          <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;catalogType&gt;</b></font>CLICKBOX<font color="#12488b"><b>&lt;/catalogType&gt;</b></font></font>
+          <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;fileType&gt;</b></font>ParticipantDirectory<font color="#12488b"><b>&lt;/fileType&gt;</b></font></font>
+          <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;localVersion&gt;</b></font>20211217102744<font color="#12488b"><b>&lt;/localVersion&gt;</b></font></font>
+          <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;url&gt;</b></font>https://grinder.cgm-medistar.cz:8443/grinder/rest/storageFiles/CLICKBOX.ParticipantDirectory.ParticipantDirectory_20211217102744.zip<font color="#12488b"><b>&lt;/url&gt;</b></font></font>
+        <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/item&gt;</b></font></font>
+      <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/items&gt;</b></font></font>
+    <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/catalog&gt;</b></font></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&lt;/catalogs&gt;</b></font></font>
+<font color="#12488b"><font size="1" style="font-size: 8pt"><b>&lt;/catalogInfo&gt;</b></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Mne z celé odpovědi zajímá pouze obsah elementu
+<i>/catalogInfo/catalogs/catalog/items/item/url</i>, takže ještě
+doplním cestu o jeho výběr:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&amp;showHeaders=</font></font><font color="#067d17"><font face="JetBrains Mono, monospace">false</font></font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+A výsledkem by mělo být URL souboru se seznamem v těle zprávy:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:11:42.728  INFO 4427 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+String</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+https://grinder.cgm-medistar.cz:8443/grinder/rest/storageFiles/CLICKBOX.ParticipantDirectory.ParticipantDirectory_20211217102744.zip</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<h2 class="western">Kapitola třetí – seznam</h2>
+<p style="line-height: 100%; margin-bottom: 0in"><i>Neplést prosím
+s tím Cibulkovým. V tomto případě se jedná o seznam
+zdravotnických zařízení.</i></p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Prozatím dobrý.
+Teď mám v těle roury URL, na kterém je k dispozici seznam ve
+formě XML zabaleného do ZIP (to je vidět podle přípony souboru).
+A ten potřebuji vyzvednout. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">S direktivou <i><b>to()</b></i>
+v tomto případě nevystačím, protože URL není známé při
+sestavení roury, ale až za jejího běhu. Naštěstí Camel
+obsahuje dynamickou variantu <i><b>toD()</b></i>. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Doplněná cesta
+tedy vypadá takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; </font></font></font>
+<font color="#080808">                      <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>GET</i></font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.toD(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${body}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal().zipFile()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.convertBodyTo(</font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&amp;showHeaders=true&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Nastavil jsem si do hlavičky typ HTTP metody, kterou chci použít
+při požadavku na soubor. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Dále jsem udělal
+vlastní dotaz s tím, že URL dotazu je obsahem těla zprávy v
+trubce.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Výsledkem je ZIP
+soubor, který musím ještě rozbalit a obsah poslat do roury.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">A takto to vypadá
+po spuštění:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:21:27.493  INFO 4670 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Headers:
+{Accept=application/xml, Accept-Charset=UTF-8, Cache-Control=public,
+CamelFileName=ParticipantDirectory_20211217102744.xml,
+CamelHttpMethod=GET, CamelHttpResponseCode=200,
+CamelHttpResponseText=, CamelMessageTimestamp=1640341284889,
+Connection=keep-alive, Content-Description=File Transfer,
+Content-Disposition=attachment;
+filename=&quot;ParticipantDirectory_20211217102744.zip&quot;,
+Content-Length=121938, Content-MD5=f3c57d08281a90b044aba76a3009d459,
+Content-Transfer-Encoding=binary, Content-Type=application/zip,
+Date=Fri, 24 Dec 2021 10:21:27 GMT, Expires=0, Pragma=public,
+Server=nginx, Strict-Transport-Security=max-age=63072000;
+includeSubDomains; preload, X-Content-Type-Options=[nosniff,
+nosniff], X-Frame-Options=[DENY, DENY], X-XSS-Protection=[1;
+mode=block, 1; mode=block]}</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+String</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;
+standalone=&quot;no&quot;?&gt;&lt;Participants&gt;  &lt;Participant&gt;
+   &lt;Clickbox&gt;      &lt;zarizeni&gt;Ordinace JAR&lt;/zarizeni&gt;
+     &lt;pracoviste&gt;Pracoviště ordinace JAR&lt;/pracoviste&gt;  
+   &lt;street&gt;Šumavská&lt;/street&gt;     
+&lt;housenumber&gt;519/35&lt;/housenumber&gt;      &lt;city&gt;Brno&lt;/city&gt;
+     &lt;postalcode&gt;60200&lt;/postalcode&gt;     
+&lt;phoneoffice&gt;111222333&lt;/phoneoffice&gt;     
+&lt;phonemobile&gt;333222111&lt;/phonemobile&gt;     
+&lt;email&gt;jakub.rysavy@cgm.com&lt;/email&gt;     
+&lt;ico&gt;47902442&lt;/ico&gt;      &lt;icz&gt;11223344&lt;/icz&gt; 
+    &lt;icp&gt;44332211&lt;/icp&gt;      &lt;odb&gt;001&lt;/odb&gt;  
+   &lt;countrycode&gt;CZ&lt;/countrycode&gt;  ... [Body clipped after
+10000 chars, total length is 2268309]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Výpis těla jsem
+hodně ořezal, ale asi tušíte, že to je ten XML soubor
+prezentovaný v prologu.</p>
+<h2 class="western">Kapitola čtvrtá – sekačka</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Nyní již mám
+načtený vlastní XML soubor.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Když se na něj
+podíváte, tak se v podstatě jedná o sekvenci elementů:</p>
+<ul>
+	<li><p style="line-height: 100%; margin-bottom: 0in">/Participants/Participant/Clickbox
+	– tohle mne zajímá</p>
+	<li><p style="line-height: 100%; margin-bottom: 0in">/Participants/Participant/MedicalNet
+	– tyhle mne nezajímají, patří k jinému systému</p>
+</ul>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Navíc budu každý
+element zpracovávat samostatně a postupně. Což znamená, že
+nemusím mít všechny elementy k dispozici současně – použiji
+tedy stream elementů vyhovujících Xpath
+<i>/Participants/Participant/Clickbox</i>:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">              <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">              <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">              <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">              <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">              <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt">.<font face="JetBrains Mono, monospace">setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; </font></font></font>
+<font color="#080808">                               <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>GET</i></font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.toD(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${body}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal().zipFile()</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.convertBodyTo(</font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">          <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.split(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Participants/Participant/Clickbox&quot;</font></font><font face="JetBrains Mono, monospace">)).streaming()</font></font></font>
+<font color="#080808">               <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&amp;showHeaders=false&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808"><font color="#8c8c8c">          </font><font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end();</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+A zkrácený výpis pak vypadá nějak takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:34:40.827  INFO 4871 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+com.sun.org.apache.xerces.internal.dom.DeferredElementNSImpl</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+&lt;Clickbox&gt;      &lt;zarizeni&gt;Ordinace JAR&lt;/zarizeni&gt;  
+   ...   &lt;/Clickbox&gt;</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:34:40.833  INFO 4871 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+com.sun.org.apache.xerces.internal.dom.DeferredElementNSImpl</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+&lt;Clickbox&gt;      &lt;organisationname&gt;Poliklinika Ústí nad
+Orlicí - TEST&lt;/organisationname&gt;     ...  &lt;/Clickbox&gt;</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:34:40.837  INFO 4871 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+com.sun.org.apache.xerces.internal.dom.DeferredElementNSImpl</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+&lt;Clickbox&gt;      &lt;organisationname&gt;UROLOGIE ČERNOŠICE
+S.R.O., TÁBORSKÁ&lt;/organisationname&gt;  ... &lt;/Clickbox&gt;</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Jedna zpráva je
+direktivou <i><b>split()</b></i> rozsekána na více zpráv, které
+budu zpracovávat postupně.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Je zde ještě jeden
+zádrhel. Abych mohl každé zařízení identifikovat, musím
+vytvořit jeho unikátní identifikátor ve formě URI. To dělám na
+základě hodnoty elementu <i><span style="font-weight: normal">/Clickbox/cgmnumber</span></i>.
+Vyberu si tedy pouze ty záznamy, které tento element mají.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Konečná varianta
+pro tuto kapitolu:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; </font></font></font>
+<font color="#080808">                      <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>GET</i></font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.toD(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${body}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal().zipFile()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.split(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Participants/Participant/Clickbox&quot;</font></font><font face="JetBrains Mono, monospace">)).streaming()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.choice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.when(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Clickbox/cgmnumber&quot;</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&amp;showHeaders=false&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.otherwise()</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody().simple(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${null}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end();</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+S výsledkem po spuštění obdobným jako výše.</p>
+<h2 class="western">Kapitola pátá – přeměna</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Dostal jsem se do
+stavu, kdy zpracovávám XML zprávu odpovídající jednomu záznamu
+o zdravotnickém zařízení.</p>
+<p style="line-height: 100%; margin-bottom: 0in">Struktura tohoto XML
+ale neodpovídá tomu, jaké atributy sleduji ve svém Java Bean.
+Musím tedy nějak obsah XML napasovat na moji podobu.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">V tomto okamžiku
+mne napadá několik variant, jak bych to mohl udělat:</p>
+<ol>
+	<li><p style="line-height: 100%; margin-bottom: 0in">Načíst XML
+	jako DOM a pomocí Xpath si z něho vyzobat údaje pro svůj bean –
+	to asi není špatný nápad.</p>
+	<li><p style="line-height: 100%; margin-bottom: 0in">Převést XML
+	pomocí JAXB do jeho bean, a následně vyzobávat údaje z tohoto
+	objektu pro svůj bean – to je příliš pracné, neboť nemám
+	XML Schema pro vygenerování zdrojů</p>
+	<li><p style="line-height: 100%; margin-bottom: 0in">Převést XML
+	do struktury odpovídající pro můj bean pomocí XSL transformace
+	a následně načíst do mého bean pomocí JAXB – také zbytečně
+	pracné, musel bych anotovat svůj třídu</p>
+	<li><p style="line-height: 100%; margin-bottom: 0in">Vypadá to
+	trochu krkolomně, ale jde to: převést XML do JSON pomocí XSL
+	transformace a následně načíst do bean.</p>
+</ol>
+<p style="line-height: 100%; margin-bottom: 0in">Vybral jsem si tu
+poslední variantu, aby to bylo trochu zajímavější.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Pro převod XML -&gt;
+JSON jsem napsal jednoduchý template, <i><b>template/xml_to_json.xslt</b></i>:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><i>&lt;?</i><font color="#174ad4">xml version</font><font color="#067d17">=&quot;1.0&quot; </font><font color="#174ad4">encoding</font><font color="#067d17">=&quot;utf-8&quot;</font><i>?&gt;</i></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:stylesheet </span></font><font color="#174ad4"><span style="background: #f7faff">xmlns:xsl</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;http://www.w3.org/1999/XSL/Transform&quot; </span></font><font color="#174ad4"><span style="background: #f7faff">version</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;1.0&quot;</span></font><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:output </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">method</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;text&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:template </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">match</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;/Clickbox&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">{</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;oid&quot;: &quot;clickbox:</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;cgmnumber&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;name&quot;: &quot;</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;translate(organisationname | zarizeni, '</span></font></font><font color="#174be6"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&amp;quot;</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">', '')&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;dn&quot;: null,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;ico&quot;: &quot;</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;ico&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:variable </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">name</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;addr&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;pracoviste&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">, </font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;street&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:text </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xml:space</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;preserve&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;</span></font><font face="JetBrains Mono, monospace"> </font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;/</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:text</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;housenumber&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">, </font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;postalcode&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:text </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xml:space</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;preserve&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;</span></font><font face="JetBrains Mono, monospace"> </font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;/</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:text</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;city&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;&lt;/</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:variable</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;addr&quot;: &quot;</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;translate($addr, '</span></font></font><font color="#174be6"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&amp;quot;</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">', '')&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;icz&quot;: &quot;</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;icz&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;phone&quot;: &quot;</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;phoneoffice | phonemobile&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;email&quot;: &quot;</font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:value-of </span></font></font><font color="#174ad4"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">select</span></font></font><font color="#067d17"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">=&quot;email&quot;</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">/&gt;</span></font><font face="JetBrains Mono, monospace">&quot;,</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;icp&quot;: [</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:for-each </span></font><font color="#174ad4"><span style="background: #f7faff">select</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;icp&quot;</span></font><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">&quot;<span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:value-of </span></font><font color="#174ad4"><span style="background: #f7faff">select</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;.&quot;</span></font><span style="background: #f7faff">/&gt;</span>&quot;<span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:choose</span></font><span style="background: #f7faff">&gt;&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:when </span></font><font color="#174ad4"><span style="background: #f7faff">test</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;position() != last()&quot;</span></font><span style="background: #f7faff">&gt;</span>,<span style="background: #f7faff">&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:when</span></font><span style="background: #f7faff">&gt;&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:choose</span></font><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><span style="background: #f7faff">&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:for-each</span></font><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">],</font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">&quot;contacts&quot;: [</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:for-each </span></font><font color="#174ad4"><span style="background: #f7faff">select</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;doctor&quot;</span></font><span style="background: #f7faff">&gt;</span>{</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">&quot;name&quot;: &quot;<span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:value-of </span></font><font color="#174ad4"><span style="background: #f7faff">select</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;firstname&quot;</span></font><span style="background: #f7faff">/&gt;&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:text </span></font><font color="#174ad4"><span style="background: #f7faff">xml:space</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;preserve&quot;</span></font><span style="background: #f7faff">&gt;</span> <span style="background: #f7faff">&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:text</span></font><span style="background: #f7faff">&gt;&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:value-of </span></font><font color="#174ad4"><span style="background: #f7faff">select</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;lastname&quot;</span></font><span style="background: #f7faff">/&gt;</span>&quot;,</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">&quot;phone&quot;: &quot;<span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:value-of </span></font><font color="#174ad4"><span style="background: #f7faff">select</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;phone&quot;</span></font><span style="background: #f7faff">/&gt;</span>&quot;</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">}<span style="background: #f7faff">&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:choose</span></font><span style="background: #f7faff">&gt;&lt;</span><font color="#0033b3"><span style="background: #f7faff">xsl:when </span></font><font color="#174ad4"><span style="background: #f7faff">test</span></font><font color="#067d17"><span style="background: #f7faff">=&quot;position() != last()&quot;</span></font><span style="background: #f7faff">&gt;</span>,<span style="background: #f7faff">&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:when</span></font><span style="background: #f7faff">&gt;&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:choose</span></font><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><span style="background: #f7faff">&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:for-each</span></font><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808">  <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">]</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">}</font></font></font>
+<font color="#080808">    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&lt;/</span></font><font color="#0033b3"><font face="JetBrains Mono, monospace"><span style="background: #f7faff">xsl:template</span></font></font><font face="JetBrains Mono, monospace"><span style="background: #f7faff">&gt;</span></font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt"><span style="background: #f7faff">&lt;/</span><font color="#0033b3"><span style="background: #f7faff">xsl:stylesheet</span></font><span style="background: #f7faff">&gt;</span></font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Roura se zabudovanou transformací pak vypadá takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; </font></font></font>
+<font color="#080808">                       <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>GET</i></font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.toD(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${body}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal().zipFile()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.split(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Participants/Participant/Clickbox&quot;</font></font><font face="JetBrains Mono, monospace">)).streaming()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.choice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.when(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Clickbox/cgmnumber&quot;</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;xslt:templates/xml_to_json.xslt&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&amp;showHeaders=false&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.otherwise()</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody().simple(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${null}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end();</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+A zkrácený výsledek nějak takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:55:43.939  INFO 5164 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+String</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+{  &quot;oid&quot;: &quot;clickbox:01300094508&quot;,  &quot;name&quot;:
+&quot;Ordinace JAR&quot;,  &quot;dn&quot;: null,  &quot;ico&quot;:
+&quot;47902442&quot;,    &quot;addr&quot;: &quot;Pracoviště
+ordinace JAR, Šumavská 519/35, 60200 Brno&quot;,  &quot;icz&quot;:
+&quot;11223344&quot;,  &quot;phone&quot;: &quot;111222333&quot;, 
+&quot;email&quot;: &quot;jakub.rysavy@cgm.com&quot;,  &quot;icp&quot;:
+[&quot;44332211&quot;],  &quot;contacts&quot;: [  ]}    </font>
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:55:43.956  INFO 5164 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+String</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+{  &quot;oid&quot;: &quot;clickbox:01300103792&quot;,  &quot;name&quot;:
+&quot;Poliklinika Ústí nad Orlicí - TEST&quot;,  &quot;dn&quot;:
+null,  &quot;ico&quot;: &quot;60112301&quot;,    &quot;addr&quot;:
+&quot;Poliklinika Ústí nad Orlicí - pracoviště, Čs. armády
+1181, 56201 Ústí nad Orlicí&quot;,  &quot;icz&quot;: &quot;65123000&quot;,
+ &quot;phone&quot;: &quot;777166528&quot;,  &quot;email&quot;:
+&quot;petr.hartman.cb@seznam.cz&quot;,  &quot;icp&quot;:
+[&quot;65123001&quot;,&quot;65123002&quot;,&quot;65123014&quot;,&quot;65123103&quot;,&quot;65123201&quot;,&quot;65123207&quot;,&quot;65123603&quot;],
+ &quot;contacts&quot;: [{&quot;name&quot;: &quot;Karel
+Svoboda&quot;,&quot;phone&quot;: &quot;111111111&quot;},{&quot;name&quot;:
+&quot;Jana Nováková&quot;,&quot;phone&quot;: &quot;111111111&quot;},{&quot;name&quot;:
+&quot;Jan Fiala&quot;,&quot;phone&quot;: &quot;111111111&quot;}  ]}  
+ </font>
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">2021-12-24
+11:55:43.971  INFO 5164 --- [cheduler://main]
+cz.dsw.camel_examples.route.CamelRoutes  : Exchange[</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">ExchangePattern:
+InOnly</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">BodyType:
+String</font></p>
+<p style="line-height: 100%; margin-bottom: 0in">  <font size="1" style="font-size: 8pt">Body:
+{  &quot;oid&quot;: &quot;clickbox:01300101562&quot;,  &quot;name&quot;:
+&quot;UROLOGIE ČERNOŠICE S.R.O., TÁBORSKÁ&quot;,  &quot;dn&quot;:
+null,  &quot;ico&quot;: &quot;03298345&quot;,    &quot;addr&quot;:
+&quot;TÁBORSKÁ, Táborská 2025, 252 28 ČERNOŠICE  &quot;, 
+&quot;icz&quot;: &quot;29725000&quot;,  &quot;phone&quot;:
+&quot;724773054&quot;,  &quot;email&quot;: &quot;mhujo@centrum.cz&quot;,
+ &quot;icp&quot;: [&quot;29725001&quot;,&quot;29906000&quot;], 
+&quot;contacts&quot;: [{&quot;name&quot;: &quot;Marcel Hujo&quot;,&quot;phone&quot;:
+&quot;&quot;}  ]}    </font>
+</p>
+<p style="line-height: 100%; margin-bottom: 0in"><font size="1" style="font-size: 8pt">]</font></p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Nyní mně již
+chybí pouze poslední dva kroky. Prvním je převést JSON na bean,
+a následně tento bean zapsat do <i><b>configStorage</b></i>.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Takže ještě roura
+rozšířená o tyto kroky:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; </font></font></font>
+<font color="#080808">                      <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>GET</i></font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.toD(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${body}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal().zipFile()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.split(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Participants/Participant/Clickbox&quot;</font></font><font face="JetBrains Mono, monospace">)).streaming()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.choice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.when(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Clickbox/cgmnumber&quot;</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;xslt:templates/xml_to_json.xslt&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal(</font><font color="#0033b3"><font face="JetBrains Mono, monospace">new </font></font><font face="JetBrains Mono, monospace">JacksonDataFormat(</font><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">                        <font size="1" style="font-size: 8pt"><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider info </font></font><font face="JetBrains Mono, monospace">= exchange.getMessage().getBody(</font><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">                        <font size="1" style="font-size: 8pt"><font color="#871094"><font face="JetBrains Mono, monospace">configStorage</font></font><font face="JetBrains Mono, monospace">.put(</font><font color="#000000"><font face="JetBrains Mono, monospace">info</font></font><font face="JetBrains Mono, monospace">.getOid(), </font><font color="#000000"><font face="JetBrains Mono, monospace">info</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.otherwise()</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody().simple(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${null}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end();</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Po spuštění již nejsou žádné výpisy. Pokud chcete, můžete
+si je do roury přidat. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Nyní bych měl mít
+data ve svém úložišti.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<h2 class="western">Kapitola šestá – stranická čistka</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Je zde ještě jeden
+problém, se kterým se musím popasovat.</p>
+<p style="line-height: 100%; margin-bottom: 0in">V každém běhu
+aktualizuji ty záznamy, které jsem již dříve načetl, případně
+přidávám nové. Může se stát, že v průběhu času nějaké
+zdravotnické zařízení ze seznamu vypadne, a takové bych měl ze
+své evidence také vyhodit. Které to ale jsou?</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Půjdu na to takto:</p>
+<ul>
+	<li><p style="line-height: 100%; margin-bottom: 0in">při každém
+	běhu si budu zaznamenávat identifikátory těch zařízení, která
+	jsem aktualizoval nebo přidal (jsou v aktuální verzi XML
+	seznamu).</p>
+	<li><p style="line-height: 100%; margin-bottom: 0in">Na závěr
+	každého běhu zpracování si:</p>
+	<ul>
+		<li><p style="line-height: 100%; margin-bottom: 0in">vytáhnu
+		množinu všech identifikátorů ve vlastní evidenci</p>
+		<li><p style="line-height: 100%; margin-bottom: 0in">od ní odečtu
+		množinu identifikátorů v aktuální verzi XML</p>
+		<li><p style="line-height: 100%; margin-bottom: 0in">všechny,
+		které zbudou, vyřadím z evidence</p>
+	</ul>
+</ul>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">To znamená, že při
+zpracování jednoho záznamu vrátím do roury jeho identifikátor. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Všechny tyto
+identifikátory agreguji do seznamu na úrovni direktivy <i><b>split()</b></i>.
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">No a na závěr
+udělám tu čistku ve vlastní evidenci.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Upravená a také
+již konečná podoba roury vypadá takto:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">from(<font color="#067d17">&quot;scheduler://main?delay={{scheduler.delay}}&amp;repeatCount={{scheduler.repeatCount}}&quot;</font>).routeId(<font color="#067d17">&quot;main-route&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">template</font></font><font face="JetBrains Mono, monospace">.getInputStream());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>POST</i></font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Content-Type&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml;charset=UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;application/xml&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;Accept-Charset&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;UTF-8&quot;</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;{{catalog.url}}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/catalogInfo/catalogs/catalog/items/item/url&quot;</font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">String</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt;</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getIn().setHeader(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>HTTP_METHOD</i></font></font><font face="JetBrains Mono, monospace">, </font><font color="#000000"><font face="JetBrains Mono, monospace">HttpEndpointBuilderFactory</font></font><font face="JetBrains Mono, monospace">.</font><font color="#000000"><font face="JetBrains Mono, monospace">HttpMethods</font></font><font face="JetBrains Mono, monospace">.</font><font color="#871094"><font face="JetBrains Mono, monospace"><i>GET</i></font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.toD(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${body}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal().zipFile()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.split(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Participants/Participant/Clickbox&quot;</font></font><font face="JetBrains Mono, monospace">), </font><font color="#0033b3"><font face="JetBrains Mono, monospace">new </font></font><font color="#000000"><font face="JetBrains Mono, monospace">AbstractListAggregationStrategy</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">URI</font></font><font face="JetBrains Mono, monospace">&gt;() {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font color="#9e880d"><font face="JetBrains Mono, monospace">@Override</font></font></font></font>
+<font color="#080808"><font color="#9e880d">            </font><font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">public </font></font><font color="#000000"><font face="JetBrains Mono, monospace">URI </font></font><font color="#00627a"><font face="JetBrains Mono, monospace">getValue</font></font><font face="JetBrains Mono, monospace">(</font><font color="#000000"><font face="JetBrains Mono, monospace">Exchange </font></font><font face="JetBrains Mono, monospace">exchange) {</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font color="#0033b3"><font face="JetBrains Mono, monospace">return </font></font><font face="JetBrains Mono, monospace">exchange.getIn().getBody(</font><font color="#000000"><font face="JetBrains Mono, monospace">URI</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">}</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">}).streaming()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.choice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.when(xpath(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;/Clickbox/cgmnumber&quot;</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.to(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;xslt:templates/xml_to_json.xslt&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.unmarshal(</font><font color="#0033b3"><font face="JetBrains Mono, monospace">new </font></font><font face="JetBrains Mono, monospace">JacksonDataFormat(</font><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">))</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">                        <font size="1" style="font-size: 8pt"><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider info </font></font><font face="JetBrains Mono, monospace">= exchange.getMessage().getBody(</font><font color="#000000"><font face="JetBrains Mono, monospace">HealthCareProvider</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">                        <font size="1" style="font-size: 8pt"><font color="#871094"><font face="JetBrains Mono, monospace">configStorage</font></font><font face="JetBrains Mono, monospace">.put(</font><font color="#000000"><font face="JetBrains Mono, monospace">info</font></font><font face="JetBrains Mono, monospace">.getOid(), </font><font color="#000000"><font face="JetBrains Mono, monospace">info</font></font><font face="JetBrains Mono, monospace">);</font></font></font>
+<font color="#080808">                        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().setBody(</font><font color="#000000"><font face="JetBrains Mono, monospace">info</font></font><font face="JetBrains Mono, monospace">.getOid());</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">})</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.otherwise()</font></font></font>
+<font color="#080808">                    <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.setBody().simple(</font><font color="#067d17"><font face="JetBrains Mono, monospace">&quot;${null}&quot;</font></font><font face="JetBrains Mono, monospace">)</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.endChoice()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.end()</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; {</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font color="#000000"><font face="JetBrains Mono, monospace">Set</font></font><font face="JetBrains Mono, monospace">&lt;</font><font color="#000000"><font face="JetBrains Mono, monospace">URI</font></font><font face="JetBrains Mono, monospace">&gt; </font><font color="#000000"><font face="JetBrains Mono, monospace">removeKeys </font></font><font face="JetBrains Mono, monospace">= </font><font color="#0033b3"><font face="JetBrains Mono, monospace">new </font></font><font face="JetBrains Mono, monospace">HashSet&lt;&gt;(</font><font color="#871094"><font face="JetBrains Mono, monospace">configStorage</font></font><font face="JetBrains Mono, monospace">.keySet());</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">exchange.getMessage().getBody(</font><font color="#000000"><font face="JetBrains Mono, monospace">List</font></font><font face="JetBrains Mono, monospace">.</font><font color="#0033b3"><font face="JetBrains Mono, monospace">class</font></font><font face="JetBrains Mono, monospace">).forEach(</font><font color="#000000"><font face="JetBrains Mono, monospace">removeKeys</font></font><font face="JetBrains Mono, monospace">::remove);</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font color="#000000"><font face="JetBrains Mono, monospace">removeKeys</font></font><font face="JetBrains Mono, monospace">.forEach(oid -&gt; </font><font color="#871094"><font face="JetBrains Mono, monospace">configStorage</font></font><font face="JetBrains Mono, monospace">.remove(oid));</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">});</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Po spuštění se bude průběžně aktualizovat moje evidence
+zdravotnických zařízení.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<h2 class="western">Kapitola poslední – epilog</h2>
+<p style="line-height: 100%; margin-bottom: 0in">Asi by bylo dobré
+si ověřit, že to skutečně funguje.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<p style="line-height: 100%; margin-bottom: 0in">Vytvořil jsem si
+tedy ještě REST službu, která vrátí obsah mé vlastní
+evidence. A jak jinak, než v Camel (je součástí
+<i><b>route/CamelRoutes</b></i>):</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">restConfiguration().port(<font color="#067d17">&quot;9091&quot;</font>).bindingMode(<font color="#000000">RestBindingMode</font>.<font color="#871094"><i>json</i></font>);</font></font></font>
+<font color="#080808"><font face="JetBrains Mono, monospace"><font size="1" style="font-size: 8pt">rest(<font color="#067d17">&quot;/storage&quot;</font>).produces(<font color="#067d17">&quot;application/json&quot;</font>)</font></font></font>
+<font color="#080808">        <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.get()</font></font></font>
+<font color="#080808">            <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.route()</font></font></font>
+<font color="#080808">                <font size="1" style="font-size: 8pt"><font face="JetBrains Mono, monospace">.process(exchange -&gt; exchange.getMessage().setBody(</font><font color="#871094"><font face="JetBrains Mono, monospace">configStorage</font></font><font face="JetBrains Mono, monospace">));</font></font></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+A nyní se můžu podívat, jaké záznamy mám v evidenci:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font size="1" style="font-size: 8pt">[raska@fedora ~]$ curl -s http://localhost:9091/storage | jq keys</font>
+<font size="1" style="font-size: 8pt"><b>[</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300094419&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300094508&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300095445&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300096291&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300097041&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300099401&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300099402&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300099703&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300099798&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300101144&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300101504&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300101562&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300101649&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300101799&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300101800&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300102395&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300102396&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300102397&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103197&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103592&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103597&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103606&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103691&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103744&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300103792&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300104142&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300104594&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105043&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105045&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105281&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105282&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105335&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105422&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105428&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105699&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;clickbox:01300105741&quot;</font></font>
+<font size="1" style="font-size: 8pt"><b>]</b></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+Případně se podívat na jeden konkrétní:</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+<pre class="western" style="line-height: 100%"><font size="1" style="font-size: 8pt">[raska@fedora ~]$ curl -s http://localhost:9091/storage | jq '.&quot;clickbox:01300094419&quot;'</font>
+<font size="1" style="font-size: 8pt"><b>{</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;oid&quot;</b></font><b>: </b><font color="#26a269">&quot;clickbox:01300094419&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;name&quot;</b></font><b>: </b><font color="#26a269">&quot;Ordinace ALC&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;dn&quot;</b></font><b>: </b><font color="#171421"><b>null</b></font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;ico&quot;</b></font><b>: </b><font color="#26a269">&quot;47902442&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;addr&quot;</b></font><b>: </b><font color="#26a269">&quot;Pracoviště ordinace ALC, Šumavská 519/35, 60200 Brno&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;icz&quot;</b></font><b>: </b><font color="#26a269">&quot;55667000&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;phone&quot;</b></font><b>: </b><font color="#26a269">&quot;246007851&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;email&quot;</b></font><b>: </b><font color="#26a269">&quot;ales.cerman@cgm.com&quot;</font><b>,</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;icp&quot;</b></font><b>: [</b></font>
+    <font size="1" style="font-size: 8pt"><font color="#26a269">&quot;55667788&quot;</font></font>
+  <font size="1" style="font-size: 8pt"><b>],</b></font>
+  <font size="1" style="font-size: 8pt"><font color="#12488b"><b>&quot;contacts&quot;</b></font><b>: []</b></font>
+<font size="1" style="font-size: 8pt"><b>}</b></font></pre><p style="line-height: 100%; margin-bottom: 0in">
+A to je vše.</p>
+<p style="line-height: 100%; margin-bottom: 0in"><br/>
+
+</p>
+</body>
+</html>

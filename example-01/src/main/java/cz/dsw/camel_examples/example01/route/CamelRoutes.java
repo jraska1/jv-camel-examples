@@ -1,6 +1,6 @@
-package cz.dsw.camel_examples.route;
+package cz.dsw.camel_examples.example01.route;
 
-import cz.dsw.camel_examples.entity.HealthCareProvider;
+import cz.dsw.camel_examples.example01.entity.HealthCareProvider;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.builder.endpoint.dsl.HttpEndpointBuilderFactory;
@@ -34,7 +34,7 @@ public class CamelRoutes extends RouteBuilder {
     @Override
     public void configure() {
 
-        from("scheduler://main?delay={{main.delay}}&repeatCount={{main.repeatCount}}").routeId("main-route")
+        from("scheduler://main?delay={{scheduler.delay}}&repeatCount={{scheduler.repeatCount}}").routeId("main-route")
                 .process(exchange -> {
                     exchange.getMessage().setBody(template.getInputStream());
                     exchange.getIn().setHeader(Exchange.HTTP_METHOD, HttpEndpointBuilderFactory.HttpMethods.POST);
@@ -44,7 +44,8 @@ public class CamelRoutes extends RouteBuilder {
                 })
                 .to("{{catalog.url}}")
                 .setBody(xpath("/catalogInfo/catalogs/catalog/items/item/url", String.class))
-                .process(exchange -> exchange.getIn().setHeader(Exchange.HTTP_METHOD, HttpEndpointBuilderFactory.HttpMethods.GET))
+                .process(exchange ->
+                        exchange.getIn().setHeader(Exchange.HTTP_METHOD, HttpEndpointBuilderFactory.HttpMethods.GET))
                 .toD("${body}")
                 .unmarshal().zipFile()
                 .split(xpath("/Participants/Participant/Clickbox"), new AbstractListAggregationStrategy<URI>() {
@@ -57,7 +58,6 @@ public class CamelRoutes extends RouteBuilder {
                         .when(xpath("/Clickbox/cgmnumber"))
                             .to("xslt:templates/xml_to_json.xslt")
                             .unmarshal(new JacksonDataFormat(HealthCareProvider.class))
-//                            .to("log:cz.dsw.camel_examples.route.CamelRoutes?multiline=true&showHeaders=true")
                             .process(exchange -> {
                                 HealthCareProvider info = exchange.getMessage().getBody(HealthCareProvider.class);
                                 configStorage.put(info.getOid(), info);
@@ -72,10 +72,7 @@ public class CamelRoutes extends RouteBuilder {
                 .process(exchange -> {
                     Set<URI> removeKeys = new HashSet<>(configStorage.keySet());
                     exchange.getMessage().getBody(List.class).forEach(removeKeys::remove);
-                    removeKeys.forEach(oid -> {
-                        configStorage.remove(oid);
-                        logger.info("Provider oid={} removed from configuration", oid);
-                    });
+                    removeKeys.forEach(oid -> configStorage.remove(oid));
                 });
 
         restConfiguration().port("9091").bindingMode(RestBindingMode.json);
